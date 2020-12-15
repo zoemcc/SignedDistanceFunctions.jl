@@ -57,3 +57,26 @@ function normal(union_sdf::UnionSignedDistanceFunction, point::Point{3, T}) wher
     normal(SDFs(union_sdf)[min_sdf_index], point)
 end
 
+struct TransformedSignedDistanceFunction{Transform<:Transformation, SDF<:AbstractSignedDistanceFunction} <: AbstractSignedDistanceFunction
+    transform::Transform
+    invtransform::Transform
+    sdf::SDF
+end
+
+transform(sdf::TransformedSignedDistanceFunction) = sdf.transform
+invtransform(sdf::TransformedSignedDistanceFunction) = sdf.invtransform
+sdf(sdf::TransformedSignedDistanceFunction) = sdf.sdf
+transform_sdf(transformation::Transformation, sdf::AbstractSignedDistanceFunction) = TransformedSignedDistanceFunction(transformation, inv(transformation), sdf)
+function transform_sdf(transformation::Transformation, transformed_sdf::TransformedSignedDistanceFunction) 
+    # collapse composed transformations
+    composed_transformation = compose(transformation, transform(transformed_sdf))
+    TransformedSignedDistanceFunction(composed_transformation, inv(composed_transformation), sdf(transformed_sdf))
+end
+
+(transformed_sdf::TransformedSignedDistanceFunction)(point::Point{3, T}) where {T<:Real} = sdf(transformed_sdf)(invtransform(transformed_sdf)(point))
+
+#function normal(transformed_sdf::TransformedSignedDistanceFunction, point::Point{3, T}) where {T<:Real}
+    #normalize(transform(transformed_sdf)(normal(sdf(transformed_sdf), point)))
+#end
+
+
