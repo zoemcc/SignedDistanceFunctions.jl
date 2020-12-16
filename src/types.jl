@@ -75,8 +75,8 @@ end
 
 (transformed_sdf::TransformedSignedDistanceFunction)(point::Point{3, T}) where {T<:Real} = sdf(transformed_sdf)(invtransform(transformed_sdf)(point))
 
-#function normal(transformed_sdf::TransformedSignedDistanceFunction, point::Point{3, T}) where {T<:Real}
-    #normalize(transform(transformed_sdf)(normal(sdf(transformed_sdf), point)))
-#end
+function normal(transformed_sdf::TransformedSignedDistanceFunction, point::Point{3, T}) where {T<:Real}
+    Vec{3, T}(normalize(LinearMap(transform_deriv(invtransform(transformed_sdf), invtransform(transformed_sdf)(point)))(invtransform(transformed_sdf)(point))))
+end
 
 
