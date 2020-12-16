@@ -7,9 +7,9 @@ using Test
 
 @testset "SignedDistanceFunctions.jl" begin
     T = Float64
-    spheresdf1 = SignedDistanceFunctions.SphereSignedDistanceFunction(0.5)
-    spheresdf2 = SignedDistanceFunctions.SphereSignedDistanceFunction(1.0)
-    unionsdf = SignedDistanceFunctions.UnionSignedDistanceFunction((spheresdf1, spheresdf2))
+    spheresdf1 = SphereSignedDistanceFunction(0.5)
+    spheresdf2 = SphereSignedDistanceFunction(1.0)
+    unionsdf = UnionSignedDistanceFunction((spheresdf1, spheresdf2))
 
     p1 = zero(Point{3, T})
     p2 = Point{3, T}(1.3, 0., 0.)
@@ -20,10 +20,10 @@ using Test
 
     @test spheresdf1(p2) ≈ 0.8
     @test spheresdf2(p2) ≈ 0.3
-    @test SignedDistanceFunctions.normal(spheresdf1, p2) ≈ Vec{3, T}(1., 0., 0.)
-    @test SignedDistanceFunctions.normal(spheresdf1, p3) ≈ Vec{3, T}(1., 0., 0.)
+    @test normal(spheresdf1, p2) ≈ Vec{3, T}(1., 0., 0.)
+    @test normal(spheresdf1, p3) ≈ Vec{3, T}(1., 0., 0.)
 
-    bvsdf = SignedDistanceFunctions.BoundingVolumeSignedDistanceFunction(0.25, spheresdf2, spheresdf1)
+    bvsdf = BoundingVolumeSignedDistanceFunction(0.25, spheresdf2, spheresdf1)
 
     @test bvsdf(p1) ≈ -0.5
     @test bvsdf(p2) ≈ 0.3
@@ -31,16 +31,16 @@ using Test
 
     # translation transformation tests
     translation1 = Translation(1., 0., 0.)
-    translated_sphere1 = SignedDistanceFunctions.transform_sdf(translation1, spheresdf1)
-    translated_sphere2 = SignedDistanceFunctions.transform_sdf(translation1, spheresdf2)
+    translated_sphere1 = transform_sdf(translation1, spheresdf1)
+    translated_sphere2 = transform_sdf(translation1, spheresdf2)
     @test translated_sphere1(p1) ≈ 0.5
     @test translated_sphere1(p2) ≈ -0.2
     @test translated_sphere2(p1) ≈ 0.0
     @test translated_sphere2(p2) ≈ -0.7
 
     translation2 = Translation(-0.5, 0., 0.)
-    translated2x_sphere1 = SignedDistanceFunctions.transform_sdf(translation2, translated_sphere1)
-    translated2x_sphere2 = SignedDistanceFunctions.transform_sdf(translation2, translated_sphere2)
+    translated2x_sphere1 = transform_sdf(translation2, translated_sphere1)
+    translated2x_sphere2 = transform_sdf(translation2, translated_sphere2)
     @test translated2x_sphere1(p1) ≈ 0.0
     @test translated2x_sphere1(p2) ≈ 0.3
     @test translated2x_sphere2(p1) ≈ -0.5
@@ -58,8 +58,8 @@ using Test
     invaffinemat(p1)
     invaffinemat(p2)
 
-    affine_sphere1 = SignedDistanceFunctions.transform_sdf(affinemat, spheresdf1)
-    @test SignedDistanceFunctions.normal(affine_sphere1, p1) ≈ Vec{3, T}(0., 1., 0.)
+    affine_sphere1 = transform_sdf(affinemat, spheresdf1)
+    @test normal(affine_sphere1, p1) ≈ Vec{3, T}(0., 1., 0.)
     
 
 
