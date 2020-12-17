@@ -19,9 +19,9 @@ struct BoundingVolumeSignedDistanceFunction{T<:Real, BoundingSDF<:AbstractSigned
     interiorSDF::InteriorSDF
 end
 
-overshootfactor(sdf::BoundingVolumeSignedDistanceFunction) = sdf.overshootfactor
-boundingSDF(sdf::BoundingVolumeSignedDistanceFunction) = sdf.boundingSDF
-interiorSDF(sdf::BoundingVolumeSignedDistanceFunction) = sdf.interiorSDF
+overshootfactor(bvsdf::BoundingVolumeSignedDistanceFunction) = bvsdf.overshootfactor
+boundingSDF(bvsdf::BoundingVolumeSignedDistanceFunction) = bvsdf.boundingSDF
+interiorSDF(bvsdf::BoundingVolumeSignedDistanceFunction) = bvsdf.interiorSDF
 
 
 function (bvsdf::BoundingVolumeSignedDistanceFunction)(point::Point{3, T}) where {T<:Real} 
@@ -46,7 +46,7 @@ struct UnionSignedDistanceFunction{T<:Tuple{Vararg{AbstractSignedDistanceFunctio
     SDFs::T
 end
 
-SDFs(sdf::UnionSignedDistanceFunction) = sdf.SDFs
+SDFs(union_sdf::UnionSignedDistanceFunction) = union_sdf.SDFs
 
 function (union_sdf::UnionSignedDistanceFunction)(point::Point{3, T}) where {T<:Real}
     minimum(sdf(point) for sdf in SDFs(union_sdf))
@@ -57,15 +57,45 @@ function normal(union_sdf::UnionSignedDistanceFunction, point::Point{3, T}) wher
     normal(SDFs(union_sdf)[min_sdf_index], point)
 end
 
+struct IntersectSignedDistanceFunction{T<:Tuple{Vararg{AbstractSignedDistanceFunction}}} <: AbstractSignedDistanceFunction
+    SDFs::T
+end
+
+SDFs(intersect_sdf::IntersectSignedDistanceFunction) = intersect_sdf.SDFs
+
+function (intersect_sdf::IntersectSignedDistanceFunction)(point::Point{3, T}) where {T<:Real}
+    maximum(sdf(point) for sdf in SDFs(intersect_sdf))
+end
+
+function normal(intersect_sdf::IntersectSignedDistanceFunction, point::Point{3, T}) where {T<:Real}
+    max_sdf_index = argmax(sdf(point) for sdf in SDFs(intersect_sdf))
+    normal(SDFs(intersect_sdf)[max_sdf_index], point)
+end
+
+struct NegatedSignedDistanceFunction{T<:AbstractSignedDistanceFunction} <: AbstractSignedDistanceFunction
+    sdf::T
+end
+
+sdf(negated_sdf::NegatedSignedDistanceFunction) = negated_sdf.sdf
+
+function (negated_sdf::NegatedSignedDistanceFunction)(point::Point{3, T}) where {T<:Real}
+    -(sdf(negated_sdf)(point))
+end
+
+function normal(negated_sdf::NegatedSignedDistanceFunction, point::Point{3, T}) where {T<:Real}
+    -(normal(sdf(negated_sdf), point))
+end
+
+
 struct TransformedSignedDistanceFunction{Transform<:Transformation, SDF<:AbstractSignedDistanceFunction} <: AbstractSignedDistanceFunction
     transform::Transform
     invtransform::Transform
     sdf::SDF
 end
 
-transform(sdf::TransformedSignedDistanceFunction) = sdf.transform
-invtransform(sdf::TransformedSignedDistanceFunction) = sdf.invtransform
-sdf(sdf::TransformedSignedDistanceFunction) = sdf.sdf
+transform(transformed_sdf::TransformedSignedDistanceFunction) = transformed_sdf.transform
+invtransform(transformed_sdf::TransformedSignedDistanceFunction) = transformed_sdf.invtransform
+sdf(transformed_sdf::TransformedSignedDistanceFunction) = transformed_sdf.sdf
 transform_sdf(transformation::Transformation, sdf::AbstractSignedDistanceFunction) = TransformedSignedDistanceFunction(transformation, inv(transformation), sdf)
 function transform_sdf(transformation::Transformation, transformed_sdf::TransformedSignedDistanceFunction) 
     # collapse composed transformations
