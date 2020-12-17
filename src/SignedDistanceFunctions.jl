@@ -11,7 +11,7 @@ using ForwardDiff
 using Zygote
 
 include("types.jl")
-include("sdfs.jl")
+include("shapes.jl")
 
 export 
     AbstractSignedDistanceFunction,
@@ -27,8 +27,13 @@ export
     UnionSignedDistanceFunction,
     SDFs,
 
+    IntersectSignedDistanceFunction,
+
+    NegatedSignedDistanceFunction,
+    sdf,
+
     TransformedSignedDistanceFunction,
-    transform, invtransform, sdf, transform_sdf,
+    transform, invtransform, transform_sdf,
 
     SphereSignedDistanceFunction,
     radius

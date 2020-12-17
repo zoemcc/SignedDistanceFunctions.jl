@@ -1,14 +1,13 @@
 abstract type AbstractSignedDistanceFunction end
 
-(sdf::AbstractSignedDistanceFunction)(::Point{3, T}) where {T<:Real} = error("Signed Distance Function for $(typeof(sdf)) has not been defined.")
-normal(sdf::AbstractSignedDistanceFunction, ::Point{3, T}) where {T<:Real} = error("Normal of Signed Distance Function for $(typeof(sdf)) has not been defined.")
+(::AbstractSignedDistanceFunction)(::Point{3, T}) where {T<:Real} = error("Signed Distance Function for $(typeof(sdf)) has not been defined.")
+normal(::AbstractSignedDistanceFunction, ::Point{3, T}) where {T<:Real} = error("Normal of Signed Distance Function for $(typeof(sdf)) has not been defined.")
 normalzygote(sdf::AbstractSignedDistanceFunction, point::Point{3, T}) where {T<:Real} = 
     Vec3{T}(normalize(Zygote.gradient(sdf, point)[1]))
 normalfinitediff(sdf::AbstractSignedDistanceFunction, point::Point{3, T}) where {T<:Real} = 
     Vec3{T}(normalize(FiniteDifferences.grad(central_fdm(5, 1), sdf, point)[1]))
 normalforwarddiff(sdf::AbstractSignedDistanceFunction, point::Point{3, T}) where {T<:Real} = 
     Vec3{T}(normalize(ForwardDiff.gradient(sdf, point)))
-
 
 
 struct BoundingVolumeSignedDistanceFunction{T<:Real, BoundingSDF<:AbstractSignedDistanceFunction,
@@ -42,6 +41,7 @@ function normal(bvsdf::BoundingVolumeSignedDistanceFunction, point::Point{3, T})
     end
 end
 
+
 struct UnionSignedDistanceFunction{T<:Tuple{Vararg{AbstractSignedDistanceFunction}}} <: AbstractSignedDistanceFunction
     SDFs::T
 end
@@ -57,6 +57,7 @@ function normal(union_sdf::UnionSignedDistanceFunction, point::Point{3, T}) wher
     normal(SDFs(union_sdf)[min_sdf_index], point)
 end
 
+
 struct IntersectSignedDistanceFunction{T<:Tuple{Vararg{AbstractSignedDistanceFunction}}} <: AbstractSignedDistanceFunction
     SDFs::T
 end
@@ -71,6 +72,7 @@ function normal(intersect_sdf::IntersectSignedDistanceFunction, point::Point{3, 
     max_sdf_index = argmax(sdf(point) for sdf in SDFs(intersect_sdf))
     normal(SDFs(intersect_sdf)[max_sdf_index], point)
 end
+
 
 struct NegatedSignedDistanceFunction{T<:AbstractSignedDistanceFunction} <: AbstractSignedDistanceFunction
     sdf::T

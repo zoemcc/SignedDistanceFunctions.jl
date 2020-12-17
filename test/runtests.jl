@@ -10,18 +10,28 @@ using Test
     spheresdf1 = SphereSignedDistanceFunction(0.5)
     spheresdf2 = SphereSignedDistanceFunction(1.0)
     unionsdf = UnionSignedDistanceFunction((spheresdf1, spheresdf2))
+    intersectsdf = IntersectSignedDistanceFunction((spheresdf1, spheresdf2))
+    negatesdf1 = NegatedSignedDistanceFunction(spheresdf1)
+    negatesdf2 = NegatedSignedDistanceFunction(spheresdf2)
 
     p1 = zero(Point{3, T})
     p2 = Point{3, T}(1.3, 0., 0.)
     p3 = Point{3, T}(1.2, 0., 0.)
     @test spheresdf1(p1) ≈ -0.5
+    @test negatesdf1(p1) ≈ 0.5
     @test spheresdf2(p1) ≈ -1.0
+    @test negatesdf2(p1) ≈ 1.0
     @test unionsdf(p1) ≈ -1.0
+    @test intersectsdf(p1) ≈ -0.5
 
     @test spheresdf1(p2) ≈ 0.8
     @test spheresdf2(p2) ≈ 0.3
+    @test intersectsdf(p2) ≈ 0.8
+    @test unionsdf(p2) ≈ 0.3
     @test normal(spheresdf1, p2) ≈ Vec{3, T}(1., 0., 0.)
+    @test normal(negatesdf1, p2) ≈ Vec{3, T}(-1., 0., 0.)
     @test normal(spheresdf1, p3) ≈ Vec{3, T}(1., 0., 0.)
+    @test normal(negatesdf1, p3) ≈ Vec{3, T}(-1., 0., 0.)
 
     bvsdf = BoundingVolumeSignedDistanceFunction(0.25, spheresdf2, spheresdf1)
 
@@ -54,9 +64,9 @@ using Test
     p5 = Point{3, T}(0., 1., 0.)
     p6 = Point{3, T}(0., -1., 0.)
 
-    invaffinemat(p5)
-    invaffinemat(p1)
-    invaffinemat(p2)
+    @test isapprox(invaffinemat(p5), Point{3, T}(0., 0., 0.); atol=1e-5)
+    @test isapprox(invaffinemat(p1), Point{3, T}(-1., 0., 0.); atol=1e-5)
+    @test isapprox(invaffinemat(p2), Point{3, T}(-1., -1.3, 0.); atol=1e-5)
 
     affine_sphere1 = transform_sdf(affinemat, spheresdf1)
     @test normal(affine_sphere1, p1) ≈ Vec{3, T}(0., 1., 0.)
